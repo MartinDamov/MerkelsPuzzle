@@ -1,27 +1,26 @@
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.io.PrintWriter;
-import java.io.FileWriter;
-import java.io.File;
-import java.io.IOException;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.List;
 
-/*
- * TODO: Could remove writeToFile() and put its code in the PuzzleGeneration()
- */
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 
 /**
- * Currently awful implementation of MerklesPuzzle
+ * Currently awful implementation of MerkelsPuzzle
  * @autor Martin Damov
  * @autor Anja Strobel
  */
-public class MerklesPuzzle {
+public class MerkelsPuzzle {
 
-	// fileName where to store the generated puzzles
-	// currently the fileName is hardcoded as we don't expect for the user to enter the name
-	private File _fileName = new File("puzzles.txt");
-
-	// FileWriter object
-	private FileWriter _writer = new FileWriter(fileName);
-
+	public static void main(String [ ] args) throws NoSuchAlgorithmException
+	{
+		PuzzleGeneration();
+	}
+	
+	
 	/**
 	 * Method generating 1024 random puzzles and writing them in a file.
 	 * Each puzzle is a cryptogram whose plaintext starts with 128 zero bits,
@@ -29,39 +28,50 @@ public class MerklesPuzzle {
 	 * These criptograms are encrypted using DES with a key whose final 48 bits are zeros.
 	 *
 	 * @return boolean value if operation successful 
+	 * @throws NoSuchAlgorithmException 
 	 */
-	public boolean PuzzleGeneration() {
-		// populate with zeros
-		byte[] start = new byte[16];
-		Arrays.fill(start, (byte)0);
-
-		// create the file where the puzzles will be stored
-		fileName.createFile();
+	public static List<String> PuzzleGeneration() throws NoSuchAlgorithmException {
 		
-		// generate puzzles
-		for (int i = 1; i <= 1024; i++) {
-			// create a puzzle number from an int (using CryptoLib from Phil)
-			byte[] puzzleNumber = smallIntToByteArray(i);
-
-			// generate random 
-
+		List<String> puzzles = new ArrayList<String>();
+		
+		String key; //key for each puzzle
+		byte[] puzzleTmp = new byte[18]; //puzzle plus number
+		
+		for (int i=1; i<=1024; i++){
+			
+			//fill first 16 bytes with 0
+			Arrays.fill(puzzleTmp, 0, 15, (byte)0);
+			
+			//add 2 byte puzzle number
+			System.arraycopy(CryptoLib.smallIntToByteArray(i),0, puzzleTmp, 16, 2);
+			
+			//generate 8 byte DES key
+			key = generateDESKeyForPuzzle();
+			
+			//combine byte array and key, then add to puzzle list
+			puzzles.add(CryptoLib.byteArrayToString(puzzleTmp) + key);
+			
 		}
-
-		// close the FileWriter after the operation is complete
-		_writer.flush();
-		_writer.close();
-
-		return true;		
+		
+		//shuffle puzzles
+		Collections.shuffle(puzzles);
+		
+		return puzzles;
 	} // end PuzzleGeneration
+	
+	
+	//generates a DES key and returns its Base64 string representation
+	private static String generateDESKeyForPuzzle() throws NoSuchAlgorithmException{
+		//Use java's key generator to produce a random key.
+		KeyGenerator keyGenerator = KeyGenerator.getInstance("DES");
+		keyGenerator.init(56);
+		SecretKey secretKey = keyGenerator.generateKey();
+		
+		String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
 
-	/**
-	 * Method which writes a puzzle to a file
-	 * @param String to write 
-	 * @return
-	 */
-	public void writeToFile(String line) throws IOException {
-		// using the FileWriter, write the line to the fileName
-		_writer.write(line + "\n");
+		return encodedKey;
 	}
 
+	
+	
 }
