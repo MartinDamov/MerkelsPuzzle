@@ -1,12 +1,26 @@
-import CryptoLib;
 import java.util.Arrays;
+import java.io.PrintWriter;
+import java.io.FileWriter;
+import java.io.File;
+import java.io.IOException;
+
+/*
+ * TODO: Could remove writeToFile() and put its code in the PuzzleGeneration()
+ */
 
 /**
- * Currently awful implementation of MerkelsPuzzle
+ * Currently awful implementation of MerklesPuzzle
  * @autor Martin Damov
- * @autor 
+ * @autor Anja Strobel
  */
 public class MerklesPuzzle {
+
+	// fileName where to store the generated puzzles
+	// currently the fileName is hardcoded as we don't expect for the user to enter the name
+	private File _fileName = new File("puzzles.txt");
+
+	// FileWriter object
+	private FileWriter _writer = new FileWriter(fileName);
 
 	/**
 	 * Method generating 1024 random puzzles and writing them in a file.
@@ -18,8 +32,11 @@ public class MerklesPuzzle {
 	 */
 	public boolean PuzzleGeneration() {
 		// populate with zeros
-		byte[16] start;
-		Arrays.fill(start, 0);
+		byte[] start = new byte[16];
+		Arrays.fill(start, (byte)0);
+
+		// create the file where the puzzles will be stored
+		fileName.createFile();
 		
 		// generate puzzles
 		for (int i = 1; i <= 1024; i++) {
@@ -27,6 +44,24 @@ public class MerklesPuzzle {
 			byte[] puzzleNumber = smallIntToByteArray(i);
 
 			// generate random 
-		}		
+
+		}
+
+		// close the FileWriter after the operation is complete
+		_writer.flush();
+		_writer.close();
+
+		return true;		
 	} // end PuzzleGeneration
+
+	/**
+	 * Method which writes a puzzle to a file
+	 * @param String to write 
+	 * @return
+	 */
+	public void writeToFile(String line) throws IOException {
+		// using the FileWriter, write the line to the fileName
+		_writer.write(line + "\n");
+	}
+
 }
