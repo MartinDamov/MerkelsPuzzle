@@ -1,9 +1,8 @@
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.LineNumberReader;
-import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Random;
+import java.util.stream.Stream;
 
 //TODO: after getting byte array from the puzzle, crack it
 //TODO: after a puzzle is cracked, get the secret key and send the puzzle number
@@ -27,67 +26,47 @@ public class PuzzleCrack {
 	/**
 	 * Crack a chosen puzzle
 	 */
-	public void crackPuzzle() throws IOException {
+	public void crackPuzzle() {
 		
 		// get a puzzle
 		String puzzleStr = choosePuzzle();
 		
 		// check if we have valid puzzle
 		if (puzzleStr == null) {
-			throw new IOException();
+
 		}
 		
 		// read through the puzzle to get needed data
 		byte[] puzzle = CryptoLib.stringToByteArray(puzzleStr);
 		
-		
+		System.out.println("--PuzzleCrack: Not yet able to crack puzzles. Please implement.");
 	}
 	
 	/**
 	 * Open and read a file
 	 * @return String randomPuzzle
 	 */
-	public String choosePuzzle() throws IOException {
+	private String choosePuzzle() {
 		String randomPuzzle = null;
 		
 		// try to read from the file and get a random puzzle
 		try {
-			FileReader fileReader = new FileReader(_fileName);
-			LineNumberReader lineNumberReader = new LineNumberReader(fileReader);
-			
-			// create a BufferedReader object to read lines
-			BufferedReader bufferedReader = new BufferedReader(fileReader);
 			
 			// We know there are 1024 puzzles. 
 			// This could be changed to accept arguments if needed.
-			int puzzleNumber = randomPuzzleNumber(1, 1024);
+			int puzzleNumber = randomPuzzleNumber(0, 1023);
 			
-			// get the puzzle by reading the file line by line
-			while (bufferedReader.readLine() != null) {
-				if (lineNumberReader.getLineNumber() == puzzleNumber) {
-					// we found the puzzle
-					randomPuzzle = bufferedReader.readLine();
-					
-					// close to release resources
-					fileReader.close();
-					bufferedReader.close();
-					lineNumberReader.close();
-					
-					break;
-				}
+			try (Stream<String> lines = Files.lines(Paths.get(_fileName))) {
+			    //random puzzle is retrieved
+				randomPuzzle = lines.skip(puzzleNumber).findFirst().get();
 			}
 			
-			// close if no match was found
-			fileReader.close();
-			bufferedReader.close();
-			lineNumberReader.close();
-			
-			return randomPuzzle;
-			
-		} catch (Exception e) {
-			
-			// catch if any error occurs
+		} catch (IOException e) {
+			//Display exception
+			System.out.println("An error occurred while choosing a random puzzle. Execution was aborted.\r\n" + e.getMessage());
 			e.printStackTrace();
+			//Abort program
+			System.exit(1);
 		}
 		return randomPuzzle;
 	} // end choosePuzzle
@@ -97,7 +76,7 @@ public class PuzzleCrack {
 	 * @param int min bound
 	 * @param int max bound
 	 */
-	public int randomPuzzleNumber(int min, int max) {
+	private int randomPuzzleNumber(int min, int max) {
 		
 		Random random = new Random();
 		
