@@ -23,12 +23,15 @@ public class PuzzleGenerator {
 	
 	private File _fileName;
 	
+	// variable for holding the puzzle numbers and corresponding keys
+	private List<byte[]> _keyLookup = new ArrayList<byte[]>();
+	
 	/**
 	 * Constructor for Puzzle Generator
 	 * 
 	 * @param puzzleFileName file to store puzzles in
 	 */
-	public PuzzleGenerator (String puzzleFileName){
+	public PuzzleGenerator(String puzzleFileName){
 		
 		// fileName where to store the generated puzzles
 		_fileName = new File(puzzleFileName);
@@ -60,6 +63,9 @@ public class PuzzleGenerator {
 			
 			//generate 8 byte DES key
 			System.arraycopy(generateDESKeyForPuzzle(), 0, puzzleTmp, 18, 8);
+			
+			//add the the puzzle key and the DES key so they can be later used for key lookup
+			_keyLookup.add((Arrays.copyOfRange(puzzleTmp, 16, puzzleTmp.length)));
 			
 			//encrypt puzzle
 			puzzle = encryptPuzzle(puzzleTmp);
@@ -201,6 +207,32 @@ public class PuzzleGenerator {
 			//Abort program
 			System.exit(1);
 		}
+	}
+	
+	/**
+	 * Looks up a key to be used given on a puzzle number
+	 * 
+	 * @return key to be used
+	 */
+	public String keyLookup(int puzzleNumber) { 
+		for (int i = 0; i < _keyLookup.size(); i++) {
+			// get sent puzzle number
+			byte[] puzzleNum = CryptoLib.smallIntToByteArray(puzzleNumber);
+			
+			// get the saved puzzle from the private List
+			byte[] savedPuzzle = _keyLookup.get(i);  	
+			
+			// get the puzzle number from the saved puzzle
+			byte[] savedPuzzleNum = {savedPuzzle[0], savedPuzzle[1]};
+			
+			// see if we have a match;
+			// if there is one, return the puzzle key
+			if (savedPuzzleNum == puzzleNum) {
+				return Arrays.copyOfRange(savedPuzzle, 2, savedPuzzle.length).toString();
+			}
+		}
+		
+		return "Error! Key not found!";
 	}
 	
 
