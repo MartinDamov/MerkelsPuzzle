@@ -3,7 +3,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -31,7 +30,7 @@ public class PuzzleGenerator {
 	 * 
 	 * @param puzzleFileName file to store puzzles in
 	 */
-	public PuzzleGenerator(String puzzleFileName){
+	public PuzzleGenerator (String puzzleFileName){
 		
 		// fileName where to store the generated puzzles
 		_fileName = new File(puzzleFileName);
@@ -84,15 +83,45 @@ public class PuzzleGenerator {
 		return;
 	} // end PuzzleGeneration
 		
+	
+	/**
+	 * Looks up a key to be used for a given puzzle number.
+	 * <p>
+	 * The key is retrieved from a List and displayed to the user.
+	 * @return key to be used
+	 */
+	public String keyLookup(int puzzleNumber) { 
 		
-	//generates a DES key and returns its byte array representation
+		// convert puzzle number to byte array
+		byte[] puzzleNum = CryptoLib.smallIntToByteArray(puzzleNumber);
+					
+		for (int i = 0; i < _keyLookup.size(); i++) {
+						
+			// get the saved puzzle from the private List
+			byte[] savedPuzzle = _keyLookup.get(i);  	
+			
+			// get the puzzle number from the saved puzzle
+			byte[] savedPuzzleNum = {savedPuzzle[0], savedPuzzle[1]};
+			
+			// see if we have a match;
+			// if there is one, return the puzzle key
+			if (Arrays.equals(savedPuzzleNum, puzzleNum)) {
+				
+				String key = CryptoLib.byteArrayToString(Arrays.copyOfRange(savedPuzzle, 2, savedPuzzle.length));
+				System.out.println("--PuzzleGenerator: Key lookup sucessful. The secret key is "+ key + ".\r\n");
+				return key;
+			}
+		}
+		
+		return "Error! Key not found!";
+}
 	
 	/**
 	 * Generates a DES Key to be used in the cryptogram.
-	 * 
+	 * <p>
 	 * The javax.crypto KeyGenerator is used to generate the key. 
 	 * The key is encoded to a byte array.
-	 * Exceptions occurring are displayed and then abort the program.
+	 * Occurring exceptions are and will abort the program.
 	 * @return DES key encoded as byte array.
 	 */
 	private byte[] generateDESKeyForPuzzle() {
@@ -123,9 +152,10 @@ public class PuzzleGenerator {
 		
 	/**
 	 * Encrypts a given puzzle using a DES key ending in 48 zeros.
+	 * <p>
 	 * The encryption key is generated using a random byte pattern ending in 48 zeros.
 	 * The puzzle is then encrypted using this key. For these operations the javax.crypto library is used.
-	 * Occuring exceptions are displayed and the program aborted in this case.
+	 * Occuring exceptions are displayed and the program will abort the program.
 	 * 
 	 * @param puzzle cryptogram to encrypt
 	 * @return encrypted puzzle as byte array
@@ -158,9 +188,8 @@ public class PuzzleGenerator {
 			//Perform the encryption
 			byte[] encryptedByte = cipher.doFinal(puzzle);
 			
-			//Get a new Base64 (ASCII) encoder and use it to convert ciphertext back to a string
-			Base64.Encoder encoder = Base64.getEncoder();
-			encryptedPuzzle = encoder.encodeToString(encryptedByte);
+			//Use CryptoLib to convert the encypted puzzle to a string
+			encryptedPuzzle = CryptoLib.byteArrayToString(encryptedByte);
 		}
 		catch(InvalidKeySpecException | NoSuchAlgorithmException | InvalidKeyException | IllegalBlockSizeException | NoSuchPaddingException | BadPaddingException e){
 			//Display exception
@@ -177,8 +206,8 @@ public class PuzzleGenerator {
 	/**
 	 * Writes given puzzles to file.
 	 * The given puzzles are written to a file with each puzzle in one line.
-	 * 
-	 * Exceptions are displayed and program is aborted on occurrence.
+	 * <p>
+	 * Occurring exceptions are displayed and will abort the program.
 	 * @param lines List of puzzles to write to file.
 	 */
 	private void writeToFile(List<String> lines) {
@@ -209,31 +238,6 @@ public class PuzzleGenerator {
 		}
 	}
 	
-	/**
-	 * Looks up a key to be used given on a puzzle number
-	 * 
-	 * @return key to be used
-	 */
-	public String keyLookup(int puzzleNumber) { 
-		for (int i = 0; i < _keyLookup.size(); i++) {
-			// get sent puzzle number
-			byte[] puzzleNum = CryptoLib.smallIntToByteArray(puzzleNumber);
-			
-			// get the saved puzzle from the private List
-			byte[] savedPuzzle = _keyLookup.get(i);  	
-			
-			// get the puzzle number from the saved puzzle
-			byte[] savedPuzzleNum = {savedPuzzle[0], savedPuzzle[1]};
-			
-			// see if we have a match;
-			// if there is one, return the puzzle key
-			if (savedPuzzleNum == puzzleNum) {
-				return Arrays.copyOfRange(savedPuzzle, 2, savedPuzzle.length).toString();
-			}
-		}
-		
-		return "Error! Key not found!";
-	}
 	
 
 }
